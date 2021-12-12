@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class Vehicle(BaseModel):
-    year: int
+    year: Optional[int]
 
 
 class HouseOwnershipStatus(str, enum.Enum):
@@ -58,7 +58,7 @@ class UserDataInput(BaseModel):
     dependents: int
     income: int
     marital_status: MaritalStatus
-    risk_questions: List[int] = Field(max_items=3, min_items=3)
+    risk_questions: List[bool] = Field(max_items=3, min_items=3)
     vehicle: Optional[Vehicle]
     house: Optional[House]
 
@@ -69,19 +69,19 @@ SCORE_RULES = [
     ("not vehicle", "auto", "set", "ineligible"),
     ("not house", "home", "set", "ineligible"),
     # If the user is over 60 years old, she is ineligible for disability and life insurance.
-    ("age > 60", "disability", "set", "ineligible"),
-    ("age > 60", "life", "set", "ineligible"),
+    ("age > 60", "disability,life", "set", "ineligible"),
+    # ("age > 60", "life", "set", "ineligible"),
     # If the user is under 30 years old, deduct 2 risk points from all lines of insurance. If she is between 30 and 40 years old, deduct 1.
     ("age < 30", "*", "subtract", 2),
     ("30 < age < 40", "*", "subtract", 1),
     # If her income is above $200k, deduct 1 risk point from all lines of insurance.
     ("income > 200000", "*", "subtract", 1),
     # If the user's house is mortgaged, add 1 risk point to her home score and add 1 risk point to her disability score.
-    ("house.ownership_status == 'mortgaged'", "home", "add", 1),
-    ("house.ownership_status == 'mortgaged'", "disability", "add", 1),
+    ("house.ownership_status == 'mortgaged'", "home,disability", "add", 1),
+    # ("house.ownership_status == 'mortgaged'", "disability", "add", 1),
     # If the user has dependents, add 1 risk point to both the disability and life scores.
-    ("dependents > 0", "disability", "add", 1),
-    ("dependents > 0", "life", "add", 1),
+    ("dependents > 0", "disability,life", "add", 1),
+    # ("dependents > 0", "life", "add", 1),
     # If the user is married, add 1 risk point to the life score and remove 1 risk point from disability.
     ("marital_status == 'married'", "disability", "subtract", 1),
     ("marital_status == 'married'", "life", "add", 1),
@@ -113,7 +113,7 @@ class ApplyRiskCalculation:
         return sum(int(x) for x in self.data["risk_questions"])
 
     def evaluate_rule(self, condition: str) -> bool:
-        return simple_eval(condition, names=self.data)
+        return bool(simple_eval(condition, names=self.data))
 
     def apply_action(self, field: str, action: str, value: int):
         # Lets work with the hypothesis that we only have add, subtract and reject actions
@@ -123,17 +123,22 @@ class ApplyRiskCalculation:
             self.fields[field] -= value
         else:
             self.fields[field] = None
-        logger.info(f"Applied: {action} to {field}")
+        print(f"Applied: {action} to {field}")
 
     def calculate(self):
         for rule in self.rules:
-            print(f"rule: {rule['field']}")
-            if self.fields.get(rule["field"]) is not None and self.evaluate_rule(
-                rule["condition"]
-            ):
-                print("Matched: " + rule["condition"])
+            print(rule["field"])
+            target_fields = rule["field"].split(",")
+            if target_fields == ["*"]:
+                target_fields = [f for f in self.fields.keys()]
+            for field in target_fields:
+                print(f"rule: {field}")
+                if self.fields.get(field) is not None and self.evaluate_rule(
+                    rule["condition"]
+                ):
+                    print("Matched: " + rule["condition"])
 
-                self.apply_action(rule["field"], rule["action"], rule["value"])
+                    self.apply_action(field, rule["action"], rule["value"])
 
     def get_result(self):
         translated_dict = {k: RiskScore.from_rating(v) for k, v in self.fields.items()}

@@ -1,2 +1,4 @@
 fastapi[all]
 simpleeval
+pytest
+parameterized
