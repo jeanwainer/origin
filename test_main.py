@@ -20,7 +20,7 @@ class ApplyRiskCalculationTest(TestCase):
             ("age > 60", "disability,life", "set", "ineligible"),
             ("age < 30", "*", "subtract", 2),
             ("marital_status == 'married'", "life", "add", 1),
-            ("vehicle['year'] > current_year - 5", "auto", "add", 1),
+            ("vehicle['year'] > date.year - 5", "auto", "add", 1),
         ]
         example_payload = {
             "age": 35,
@@ -46,7 +46,7 @@ class ApplyRiskCalculationTest(TestCase):
             ("1 == True", True),
             ("1+2", True),
             ("0", False),
-            ("current_year == 1992", False),
+            ("date.year == 1992", False),
         ]
     )
     def test_evaluate_rule_and_year(self, expression, result):
@@ -57,8 +57,8 @@ class ApplyRiskCalculationTest(TestCase):
         obj = ApplyRiskCalculation(
             data={"risk_questions": [True, True, True]}, rules=[]
         )
-        self.assertEqual(obj.evaluate_rule("current_year == 1992"), True)
-        self.assertEqual(obj.evaluate_rule("current_year == 2021"), False)
+        self.assertEqual(obj.evaluate_rule("date.year == 1992"), True)
+        self.assertEqual(obj.evaluate_rule("date.year == 2021"), False)
 
     @parameterized.expand(
         [

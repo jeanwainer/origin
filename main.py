@@ -31,7 +31,7 @@ SCORE_RULES = [
     ("marital_status == 'married'", "disability", "subtract", 1),
     ("marital_status == 'married'", "life", "add", 1),
     # If the user's vehicle was produced in the last 5 years, add 1 risk point to that vehicle’s score.
-    ("vehicle['year'] > current_year - 5", "auto", "add", 1),
+    ("vehicle['year'] > date.year - 5", "auto", "add", 1),
 ]
 
 
@@ -92,7 +92,7 @@ class ApplyRiskCalculation:
 
     def __init__(self, data: dict, rules: list):
         self.data = data
-        self.data["current_year"] = datetime.now().year
+        self.data["date"] = datetime.now()
         self.rules = [
             {"condition": r[0], "field": r[1], "action": r[2], "value": r[3]}
             for r in rules
