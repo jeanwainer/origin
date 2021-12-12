@@ -35,17 +35,17 @@ SCORE_RULES = [
 ]
 
 
-class Vehicle(BaseModel):
-    year: Optional[int]
-
-
 class HouseOwnershipStatus(str, enum.Enum):
     owned = "owned"
     mortgaged = "mortgaged"
 
 
 class House(BaseModel):
-    ownership_status = HouseOwnershipStatus
+    ownership_status: HouseOwnershipStatus
+
+
+class Vehicle(BaseModel):
+    year: Optional[int]
 
 
 class MaritalStatus(str, enum.Enum):
@@ -84,7 +84,7 @@ class UserDataInput(BaseModel):
     marital_status: MaritalStatus
     risk_questions: List[bool] = Field(max_items=3, min_items=3)
     vehicle: Optional[Vehicle]
-    house: House
+    house: Optional[House]
 
 
 class ApplyRiskCalculation:
