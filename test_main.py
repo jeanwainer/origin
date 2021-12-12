@@ -1,6 +1,4 @@
 from copy import deepcopy
-from datetime import datetime
-from unittest.mock import patch, MagicMock
 from freezegun import freeze_time
 
 from fastapi.testclient import TestClient
@@ -90,8 +88,22 @@ class ApplyRiskCalculationTest(TestCase):
         self.assertEqual(result["auto"], RiskScore.ineligible)
         self.assertEqual(result["home"], RiskScore.regular)
 
-    def test_calculate(self):
-        pass
+    @parameterized.expand(
+        [
+            (("age > 30", "disability", "set", "ineligible"), "disability", None),
+            (("age < 30", "disability", "set", "ineligible"), "disability", 3),
+            (("age == 35", "auto,home", "add", 1), "disability", 3),
+            (("age == 35", "auto,disability", "add", 1), "disability", 4),
+            (("age == 42", "disability", "add", 1), "disability", 3),
+            (("age is None", "disability,life", "subtract", 1), "disability", 3),
+            (("age is not None", "*", "subtract", 45), "disability", -42),
+        ]
+    )
+    def test_calculate(self, rule, field, result):
+        payload = {"age": 35, "risk_questions": [True, True, True]}
+        self.obj = ApplyRiskCalculation(data=payload, rules=[rule])
+        self.obj.calculate()
+        self.assertEqual(self.obj.fields[field], result)
 
 
 class DataValidationTest(TestCase):
