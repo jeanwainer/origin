@@ -47,7 +47,8 @@ This is just a first revision, and there is space to improve:
 - Remove score processing rules that are hardcoded in the code, and make them more flexible to set up externally.
 - Rethink variables names, I recon that "field" was not the best choice for a name.
 - This implementation might not validate correctly some nested data from the such as house.ownership_status.
-- As the original instructions say, the endpoint is ready to accept 0 or 1 house. In this implementation, I'm considering that 0 houses is no "house" keyword, and 1 house is a `house` keyword with `ownership_status`. A next iteration of this implementation should also consider house with an empty array "0" houses. 
+- As the original instructions say, the endpoint is ready to accept 0 or 1 house. In this implementation, I'm considering that 0 houses is no "house" keyword, and 1 house is a `house` keyword with `ownership_status`. A next iteration of this implementation should also consider house with an empty array "0" houses.
+- We should provide the context variables in a better formatted way - ```house['ownership_status']``` is not ideal in the rules writing context, a better syntax such as `house.ownership_status` would be much better.
 
 
 
